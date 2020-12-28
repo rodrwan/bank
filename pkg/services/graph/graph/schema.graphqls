@@ -1,0 +1,89 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+enum AccountType {
+		DEBIT
+		CREDIT
+		SAVING
+}
+
+enum TransactionType {
+  DEPOSIT
+  CHARGE
+}
+
+type Account {
+  id: ID!
+  kind: AccountType
+  user: User!
+  balance: Float
+}
+
+type Session {
+  access_token: String!
+  refresh_token: String!
+}
+
+type Deposit {
+  id: ID!
+  account_id: ID!
+  amount: Float
+  date: Time
+}
+
+type User {
+  id: ID!
+  name: String!
+}
+
+type Withdrawal {
+  account_id: ID!
+  amount: Float!
+}
+
+type Transaction {
+  account_id: ID!
+  user_id: ID!
+  amount: Float!
+  kind: TransactionType!
+  date: Date
+
+}
+
+type Query {
+  accounts: [Account!]!
+}
+
+input NewSession {
+  username: String!
+  password: String!
+}
+
+input NewUser {
+  user: User!
+}
+
+input NewAccount {
+  user_id: ID!
+  initial_amount: Float
+  kind: AccountType
+}
+
+input NewDeposit {
+  account_id: ID!
+  amount: Float
+}
+
+type Mutation {
+  createUser(input: NewUser!): User!
+  createSession(input: NewSession!): Session! @isAuthenticated
+
+  createAccount(input: NewAccount): Account! @isAuthenticated
+
+  createDeposit(input: NewDeposit!): Deposit! @isAuthenticated
+}
+
+scalar Time
+
+directive @isAuthenticated on FIELD_DEFINITION

@@ -1,0 +1,105 @@
+version: "3"
+
+services:
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3-management
+    ports:
+      - "8082:15672"
+
+  broker:
+    container_name: broker
+    build: .
+    command:
+      - "go run"
+      - "cmd/broker/main.go"
+    environment:
+      - MQ_URI=amqp://rabbitmq
+      - MONGO_URI=mongodb://db:27017
+    depends_on:
+      - rabbitmq
+
+  server:
+    container_name: withdrawals
+    build: .
+    command:
+      - "go run"
+      - "cmd/server/main.go"
+    environment:
+      - ACCOUNTS_URL=accounts:8001
+      - DEPOSITS_URL=deposits:8002
+      - SESSION_URL=account:8003
+      - WITHDRAWALS_URL=account:8004
+      - PORT=8000
+    depends_on:
+      - db
+      - rabbitmq
+    ports:
+      - "8000:8000"
+
+  accounts:
+    container_name: accounts
+    build: .
+    command:
+      - "go run"
+      - "cmd/accounts/main.go"
+    environment:
+      - MONGO_URI=mongodb://db:27017
+      - PORT=8001
+    depends_on:
+      - db
+      - rabbitmq
+    ports:
+      - "8001:8001"
+
+  deposits:
+    container_name: deposits
+    build: .
+    command:
+      - "go run"
+      - "cmd/deposits/main.go"
+    environment:
+      - MONGO_URI=mongodb://db:27017
+      - PORT=8002
+    depends_on:
+      - db
+      - rabbitmq
+    ports:
+      - "8002:8002"
+
+  session:
+    container_name: session
+    build: .
+    command:
+      - "go run"
+      - "cmd/session/main.go"
+    environment:
+      - MONGO_URI=mongodb://db:27017
+      - PORT=8003
+    depends_on:
+      - db
+      - rabbitmq
+    ports:
+      - "8003:8003"
+
+  withdrawals:
+    container_name: withdrawals
+    build: .
+    command:
+      - "go run"
+      - "cmd/withdrawals/main.go"
+    environment:
+      - MONGO_URI=mongodb://db:27017
+      - PORT=8004
+    depends_on:
+      - db
+      - rabbitmq
+    ports:
+      - "8004:8004"
+
+  db:
+    container_name: db
+    image: postgres
+
+  cassandra:
+    image:  cassandra
