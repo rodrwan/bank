@@ -7,99 +7,203 @@ services:
     ports:
       - "8082:15672"
 
-  broker:
-    container_name: broker
-    build: .
-    command:
-      - "go run"
-      - "cmd/broker/main.go"
-    environment:
-      - MQ_URI=amqp://rabbitmq
-      - MONGO_URI=mongodb://db:27017
-    depends_on:
-      - rabbitmq
+  # broker:
+  #   container_name: broker
+  #   build: .
+  #   command:
+  #     - "go run"
+  #     - "cmd/broker/main.go"
+  #   environment:
+  #     - MQ_URI=amqp://rabbitmq
+  #     - MONGO_URI=mongodb://db:27017
+  #   depends_on:
+  #     - rabbitmq
 
   server:
-    container_name: withdrawals
-    build: .
-    command:
-      - "go run"
-      - "cmd/server/main.go"
+    container_name: server
+    build:
+      dockerfile: ./cmd/server/Dockerfile
+      context: .
+    restart: always
     environment:
       - ACCOUNTS_URL=accounts:8001
       - DEPOSITS_URL=deposits:8002
       - SESSION_URL=account:8003
       - WITHDRAWALS_URL=account:8004
       - PORT=8000
+      - JAEGER_SERVICE_NAME=grapqhl-server
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6832
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
     depends_on:
-      - db
+      - postgres
       - rabbitmq
     ports:
       - "8000:8000"
 
-  accounts:
-    container_name: accounts
-    build: .
-    command:
-      - "go run"
-      - "cmd/accounts/main.go"
+  denormalizer:
+    container_name: denormalizer
+    build:
+      dockerfile: ./cmd/denormalizer/Dockerfile
+      context: .
+    restart: always
+    environment:
+      - RABBIT_MQ_URL=amqp://guest:guest@rabbitmq:5672
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6832
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+    depends_on:
+      - rabbitmq
+
+  accounts-read:
+    container_name: accounts-read
+    build:
+      dockerfile: ./cmd/accounts/read/Dockerfile
+      context: .
+    restart: always
     environment:
       - MONGO_URI=mongodb://db:27017
-      - PORT=8001
+      - RABBIT_MQ_URL=amqp://guest:guest@rabbitmq:5672
+      - PORT=8010
+      - JAEGER_SERVICE_NAME=accounts-read-svc
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6832
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
     depends_on:
-      - db
       - rabbitmq
     ports:
-      - "8001:8001"
+      - "8010:8010"
 
-  deposits:
-    container_name: deposits
-    build: .
-    command:
-      - "go run"
-      - "cmd/deposits/main.go"
+  accounts-write:
+    container_name: accounts-write
+    build:
+      dockerfile: ./cmd/accounts/write/Dockerfile
+      context: .
+    restart: always
     environment:
       - MONGO_URI=mongodb://db:27017
-      - PORT=8002
+      - RABBIT_MQ_URL=amqp://guest:guest@rabbitmq:5672
+      - POSTGRES_DSN=postgres://postgres:postgres@postgres:5432/accounts_api?sslmode=disable
+      - PORT=8011
+      - JAEGER_SERVICE_NAME=accounts-write-svc
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6832
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
     depends_on:
-      - db
+      - postgres
       - rabbitmq
     ports:
-      - "8002:8002"
+      - "8011:8011"
 
-  session:
-    container_name: session
-    build: .
-    command:
-      - "go run"
-      - "cmd/session/main.go"
+  users-read:
+    container_name: users-read
+    build:
+      dockerfile: ./cmd/users/read/Dockerfile
+      context: .
+    restart: always
     environment:
       - MONGO_URI=mongodb://db:27017
-      - PORT=8003
+      - RABBIT_MQ_URL=amqp://guest:guest@rabbitmq:5672
+      - POSTGRES_DSN=postgres://postgres:postgres@postgres:5432/users_api?sslmode=disable
+      - PORT=8020
+      - JAEGER_SERVICE_NAME=users-read-svc
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6832
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
     depends_on:
-      - db
+      - postgres
       - rabbitmq
     ports:
-      - "8003:8003"
+      - "8020:8020"
 
-  withdrawals:
-    container_name: withdrawals
-    build: .
-    command:
-      - "go run"
-      - "cmd/withdrawals/main.go"
+  users-write:
+    container_name: users-write
+    build:
+      dockerfile: ./cmd/users/write/Dockerfile
+      context: .
+    restart: always
     environment:
       - MONGO_URI=mongodb://db:27017
-      - PORT=8004
+      - RABBIT_MQ_URL=amqp://guest:guest@rabbitmq:5672
+      - POSTGRES_DSN=postgres://postgres:postgres@postgres:5432/users_api?sslmode=disable
+      - PORT=8021
+      - JAEGER_SERVICE_NAME=users-write-svc
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6832
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
     depends_on:
-      - db
+      - postgres
       - rabbitmq
     ports:
-      - "8004:8004"
+      - "8021:8021"
+  # deposits:
+  #   container_name: deposits
+  #   build: .
+  #   command:
+  #     - "go run"
+  #     - "cmd/deposits/main.go"
+  #   environment:
+  #     - MONGO_URI=mongodb://db:27017
+  #     - PORT=8002
+  #   depends_on:
+  #     - db
+  #     - rabbitmq
+  #   ports:
+  #     - "8002:8002"
 
-  db:
-    container_name: db
-    image: postgres
+  # session:
+  #   container_name: session
+  #   build: .
+  #   command:
+  #     - "go run"
+  #     - "cmd/session/main.go"
+  #   environment:
+  #     - MONGO_URI=mongodb://db:27017
+  #     - PORT=8003
+  #   depends_on:
+  #     - db
+  #     - rabbitmq
+  #   ports:
+  #     - "8003:8003"
+
+  # withdrawals:
+  #   container_name: withdrawals
+  #   build: .
+  #   command:
+  #     - "go run"
+  #     - "cmd/withdrawals/main.go"
+  #   environment:
+  #     - MONGO_URI=mongodb://db:27017
+  #     - PORT=8004
+  #   depends_on:
+  #     - db
+  #     - rabbitmq
+  #   ports:
+  #     - "8004:8004"
+
+  postgres:
+    container_name: postgres
+    image: "postgres:11.5-alpine"
+    volumes:
+      - ./docker-postgresql-multiple-databases:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_MULTIPLE_DATABASES=users_api,accounts_api
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+    ports:
+      - "5432:5432"
 
   cassandra:
-    image:  cassandra
+    image: cassandra
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "14250:14250"
+      - "9411:9411"
