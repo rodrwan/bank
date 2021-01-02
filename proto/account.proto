@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+option go_package = "github.com/rodrwan/bank/pkg/pb/accounts";
+
+import "google/protobuf/timestamp.proto";
+
+package accounts;
+
+// The AccountRead service provides several operation to get accounts.
+service AccountReadService {
+  // Article returns a single article by ID
+  rpc GetAccountByUserID (GetAccountByUserIDRequest) returns (GetAccountByUserIDResponse) {}
+}
+
+message GetAccountByUserIDRequest {
+  string user_id = 1;
+}
+
+message GetAccountByUserIDResponse {
+  Account account = 1;
+}
+
+// The AccountWrite service provides serveral operation to mutate accounts.
+service AccountWriteService {
+  // CreateAccount creates an account.
+  rpc CreateAccount (CreateAccountRequest) returns (CreateAccountResponse) {}
+}
+
+message CreateAccountRequest {
+  Account account = 1;
+}
+
+message CreateAccountResponse {}
+
+message Account {
+  string id = 1;
+  string user_id = 2;
+  string name = 3;
+  string number = 4;
+  int32 balance = 5;
+
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp update_at = 7;
+}

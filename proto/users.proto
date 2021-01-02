@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+option go_package = "github.com/rodrwan/bank/pkg/pb/users";
+
+import "google/protobuf/timestamp.proto";
+import "account.proto";
+
+package users;
+
+// The UsersRead service provides several operation to get accounts.
+service UsersReadService {
+  // Article returns a single article by ID
+  rpc GetUser (GetUserRequest) returns (GetUserResponse) {}
+  rpc GetUserAccount (GetUserAccountRequest) returns (GetUserAccountResponse) {}
+}
+
+message GetUserRequest {
+  string id = 1;
+  string username = 2;
+  string email = 3;
+}
+
+message GetUserResponse {
+  User user = 1;
+}
+
+message GetUserAccountRequest {
+  string id = 1;
+  string username = 2;
+  string email = 3;
+}
+
+message GetUserAccountResponse {
+  User user = 1;
+  Account account = 2;
+}
+
+// The UsersWrite service provides serveral operation to mutate accounts.
+service UsersWriteService {
+  // CreateUser creates a User.
+  rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {}
+}
+
+message CreateUserRequest {
+  User user = 1;
+}
+
+message CreateUserResponse {}
+
+message User {
+  string id = 1;
+  string first_name = 2;
+  string last_name = 3;
+  string username = 4;
+  string email = 5;
+  string password = 6;
+
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp update_at = 8;
+}
