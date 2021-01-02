@@ -32,7 +32,7 @@ message GetUserAccountRequest {
 
 message GetUserAccountResponse {
   User user = 1;
-  Account account = 2;
+  accounts.Account account = 2;
 }
 
 // The UsersWrite service provides serveral operation to mutate accounts.

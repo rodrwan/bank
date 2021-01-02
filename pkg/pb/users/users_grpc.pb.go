@@ -19,6 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 type UsersReadServiceClient interface {
 	// Article returns a single article by ID
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
+	GetUserAccount(ctx context.Context, in *GetUserAccountRequest, opts ...grpc.CallOption) (*GetUserAccountResponse, error)
 }
 
 type usersReadServiceClient struct {
@@ -38,12 +39,22 @@ func (c *usersReadServiceClient) GetUser(ctx context.Context, in *GetUserRequest
 	return out, nil
 }
 
+func (c *usersReadServiceClient) GetUserAccount(ctx context.Context, in *GetUserAccountRequest, opts ...grpc.CallOption) (*GetUserAccountResponse, error) {
+	out := new(GetUserAccountResponse)
+	err := c.cc.Invoke(ctx, "/users.UsersReadService/GetUserAccount", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UsersReadServiceServer is the server API for UsersReadService service.
 // All implementations must embed UnimplementedUsersReadServiceServer
 // for forward compatibility
 type UsersReadServiceServer interface {
 	// Article returns a single article by ID
 	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
+	GetUserAccount(context.Context, *GetUserAccountRequest) (*GetUserAccountResponse, error)
 	mustEmbedUnimplementedUsersReadServiceServer()
 }
 
@@ -53,6 +64,9 @@ type UnimplementedUsersReadServiceServer struct {
 
 func (UnimplementedUsersReadServiceServer) GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
+}
+func (UnimplementedUsersReadServiceServer) GetUserAccount(context.Context, *GetUserAccountRequest) (*GetUserAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserAccount not implemented")
 }
 func (UnimplementedUsersReadServiceServer) mustEmbedUnimplementedUsersReadServiceServer() {}
 
@@ -85,6 +99,24 @@ func _UsersReadService_GetUser_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UsersReadService_GetUserAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsersReadServiceServer).GetUserAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/users.UsersReadService/GetUserAccount",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsersReadServiceServer).GetUserAccount(ctx, req.(*GetUserAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _UsersReadService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "users.UsersReadService",
 	HandlerType: (*UsersReadServiceServer)(nil),
@@ -92,6 +124,10 @@ var _UsersReadService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUser",
 			Handler:    _UsersReadService_GetUser_Handler,
+		},
+		{
+			MethodName: "GetUserAccount",
+			Handler:    _UsersReadService_GetUserAccount_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
