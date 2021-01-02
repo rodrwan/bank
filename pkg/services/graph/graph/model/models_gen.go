@@ -2,19 +2,167 @@
 
 package model
 
-type NewTodo struct {
-	Text   string `json:"text"`
-	UserID string `json:"userId"`
+import (
+	"fmt"
+	"io"
+	"strconv"
+	"time"
+)
+
+type Account struct {
+	ID      string      `json:"id"`
+	UserID  string      `json:"user_id"`
+	Kind    AccountType `json:"kind"`
+	Name    string      `json:"name"`
+	Number  string      `json:"number"`
+	Balance string      `json:"balance"`
+	User    *User       `json:"user"`
 }
 
-type Todo struct {
-	ID   string `json:"id"`
-	Text string `json:"text"`
-	Done bool   `json:"done"`
-	User *User  `json:"user"`
+type CreateAccountResponse struct {
+	Status bool `json:"status"`
+}
+
+type CreateUserAccountResponse struct {
+	Status bool   `json:"status"`
+	UserID string `json:"user_id"`
+}
+
+type Deposit struct {
+	ID        string     `json:"id"`
+	AccountID string     `json:"account_id"`
+	Amount    *float64   `json:"amount"`
+	Date      *time.Time `json:"date"`
+}
+
+type NewAccount struct {
+	UserID        string       `json:"user_id"`
+	InitialAmount *float64     `json:"initial_amount"`
+	Kind          *AccountType `json:"kind"`
+}
+
+type NewDeposit struct {
+	AccountID string   `json:"account_id"`
+	Amount    *float64 `json:"amount"`
+}
+
+type NewSession struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type NewUser struct {
+	Name string `json:"name"`
+}
+
+type Profile struct {
+	User    *User    `json:"user"`
+	Account *Account `json:"account"`
+}
+
+type Session struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+type Transaction struct {
+	AccountID string          `json:"account_id"`
+	UserID    string          `json:"user_id"`
+	Amount    float64         `json:"amount"`
+	Kind      TransactionType `json:"kind"`
+	Date      *time.Time      `json:"date"`
 }
 
 type User struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
+}
+
+type Withdrawal struct {
+	AccountID string  `json:"account_id"`
+	Amount    float64 `json:"amount"`
+}
+
+type AccountType string
+
+const (
+	AccountTypeDebit  AccountType = "DEBIT"
+	AccountTypeCredit AccountType = "CREDIT"
+	AccountTypeSaving AccountType = "SAVING"
+)
+
+var AllAccountType = []AccountType{
+	AccountTypeDebit,
+	AccountTypeCredit,
+	AccountTypeSaving,
+}
+
+func (e AccountType) IsValid() bool {
+	switch e {
+	case AccountTypeDebit, AccountTypeCredit, AccountTypeSaving:
+		return true
+	}
+	return false
+}
+
+func (e AccountType) String() string {
+	return string(e)
+}
+
+func (e *AccountType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = AccountType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid AccountType", str)
+	}
+	return nil
+}
+
+func (e AccountType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type TransactionType string
+
+const (
+	TransactionTypeDeposit TransactionType = "DEPOSIT"
+	TransactionTypeCharge  TransactionType = "CHARGE"
+)
+
+var AllTransactionType = []TransactionType{
+	TransactionTypeDeposit,
+	TransactionTypeCharge,
+}
+
+func (e TransactionType) IsValid() bool {
+	switch e {
+	case TransactionTypeDeposit, TransactionTypeCharge:
+		return true
+	}
+	return false
+}
+
+func (e TransactionType) String() string {
+	return string(e)
+}
+
+func (e *TransactionType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = TransactionType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid TransactionType", str)
+	}
+	return nil
+}
+
+func (e TransactionType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

@@ -15,9 +15,12 @@ enum TransactionType {
 
 type Account {
   id: ID!
-  kind: AccountType
+  user_id: String!
+  kind: AccountType!
+  name: String!
+  number: String!
+  balance: Int64!
   user: User!
-  balance: Float
 }
 
 type Session {
@@ -47,12 +50,16 @@ type Transaction {
   user_id: ID!
   amount: Float!
   kind: TransactionType!
-  date: Date
-
+  date: Time
 }
 
+type Profile {
+  user: User!
+  account: Account!
+}
 type Query {
-  accounts: [Account!]!
+  profile: Profile!
+
 }
 
 input NewSession {
@@ -61,7 +68,7 @@ input NewSession {
 }
 
 input NewUser {
-  user: User!
+  name: String!
 }
 
 input NewAccount {
@@ -75,15 +82,25 @@ input NewDeposit {
   amount: Float
 }
 
-type Mutation {
-  createUser(input: NewUser!): User!
-  createSession(input: NewSession!): Session! @isAuthenticated
+type CreateAccountResponse {
+  status: Boolean!
+}
 
-  createAccount(input: NewAccount): Account! @isAuthenticated
+type CreateUserAccountResponse {
+  status: Boolean!
+  user_id: String!
+}
+
+type Mutation {
+  createUserAccount(input: NewUser!): CreateUserAccountResponse! @trace
+
+  createSession(input: NewSession!): Session! @isAuthenticated
 
   createDeposit(input: NewDeposit!): Deposit! @isAuthenticated
 }
 
 scalar Time
+scalar Int64
 
 directive @isAuthenticated on FIELD_DEFINITION
+directive @trace on FIELD_DEFINITION
