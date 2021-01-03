@@ -8,6 +8,7 @@ import (
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	"github.com/opentracing/opentracing-go"
 	accounts "github.com/rodrwan/bank/pkg/pb/accounts"
+	"github.com/rodrwan/bank/pkg/pb/session"
 	users "github.com/rodrwan/bank/pkg/pb/users"
 	"github.com/rodrwan/bank/pkg/services/graph"
 	"github.com/rodrwan/bank/pkg/tracer"
@@ -25,21 +26,25 @@ func main() {
 	defer closer.Close()
 	opentracing.SetGlobalTracer(tracer)
 
-	accountsReadConn := connect("accounts-read:8010", tracer)
+	accountsReadConn := connect(os.Getenv("ACCOUNTS_READ_URL"), tracer)
 	defer accountsReadConn.Close()
 	accountsReadClient := accounts.NewAccountReadServiceClient(accountsReadConn)
 
-	accountsWriteConn := connect("accounts-write:8011", tracer)
+	accountsWriteConn := connect(os.Getenv("ACCOUNTS_WRITE_URL"), tracer)
 	defer accountsWriteConn.Close()
 	accountsWriteClient := accounts.NewAccountWriteServiceClient(accountsWriteConn)
 
-	usersReadConn := connect("users-read:8020", tracer)
+	usersReadConn := connect(os.Getenv("USERS_READ_URL"), tracer)
 	defer usersReadConn.Close()
 	usersReadClient := users.NewUsersReadServiceClient(usersReadConn)
 
-	usersWriteConn := connect("users-write:8021", tracer)
+	usersWriteConn := connect(os.Getenv("USERS_WRITE_URL"), tracer)
 	defer usersWriteConn.Close()
 	usersWriteClient := users.NewUsersWriteServiceClient(usersWriteConn)
+
+	sessionConn := connect(os.Getenv("SESSION_URL"), tracer)
+	defer sessionConn.Close()
+	sessionClient := session.NewSessionServiceClient(sessionConn)
 
 	graph.NewServer(graph.ServerConfig{
 		Port:                port,
@@ -47,6 +52,7 @@ func main() {
 		AccountsWriteClient: accountsWriteClient,
 		UsersReadClient:     usersReadClient,
 		UsersWriteClient:    usersWriteClient,
+		SessionClient:       sessionClient,
 	}, tracer)
 }
 

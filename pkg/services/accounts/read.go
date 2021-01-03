@@ -10,6 +10,7 @@ import (
 
 // NewReadService initialises an instance of the accounts service.
 func NewReadService(asc AccountServiceConfig) pb.AccountReadServiceServer {
+	fmt.Println("Accounts write service")
 	return ReadService{}
 }
 

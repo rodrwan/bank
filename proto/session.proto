@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+option go_package = "github.com/rodrwan/bank/pkg/pb/session";
+
+import "google/protobuf/timestamp.proto";
+
+package session;
+
+// The Session service provides several operation to CRUD session.
+service SessionService {
+  // Article returns a single article by ID
+  rpc GetSessionData (GetSessionDataRequest) returns (GetSessionDataResponse) {}
+  rpc CreateSession (CreateSessionRequest) returns (CreateSessionResponse) {}
+  rpc RefreshSession (RefreshSessionRequest) returns (RefreshSessionResponse) {}
+  rpc DeleteSession (DeleteSessionRequest) returns (DeleteSessionResponse) {}
+}
+
+message GetSessionDataRequest {
+  string token = 1;
+}
+
+message GetSessionDataResponse {
+  Session data = 1;
+}
+
+message CreateSessionRequest {
+  string reference_id = 1;
+  string data = 2;
+}
+
+message CreateSessionResponse {
+  Auth data = 1;
+}
+
+message RefreshSessionRequest {
+  Auth data = 1;
+}
+
+message RefreshSessionResponse {
+  Auth data = 1;
+}
+
+message DeleteSessionRequest {
+  Auth data = 1;
+}
+
+message DeleteSessionResponse {
+}
+
+
+message Session {
+  string data = 1;
+  string access_token = 2;
+  string refressh_token = 3;
+  string access_uuid = 4;
+  string refresh_uuid = 5;
+  google.protobuf.Timestamp at_expires = 6;
+  google.protobuf.Timestamp rt_expires = 7;
+
+  string reference_id = 8;
+}
+
+message Auth {
+  string access_token = 1;
+  string refresh_token = 2;
+}

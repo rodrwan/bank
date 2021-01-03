@@ -2,12 +2,14 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/rodrwan/bank/pkg/pb/session"
 )
 
 const (
@@ -27,17 +29,39 @@ var accessTokenCtxKey = &contextKey{accessTokenCookieName}
 var authTokenCtxKey = &contextKey{authTokenCookieName}
 var userIDCtxKey = &contextKey{"user-id"}
 
+// ErrorMessage ...
+type ErrorMessage struct {
+	Error string `json:"error,omitempty"`
+}
+
 // Middleware decodes the share session cookie and packs the session into context
-func Middleware(next http.HandlerFunc, domain string, secure bool) http.Handler {
+func Middleware(next http.HandlerFunc, sessionClient session.SessionServiceClient, domain string, secure bool) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		bearer, _ := parseAuthToken(r)
 
 		// Check if bearer is not blank
 		if bearer != "" { // && accessToken != nil {
 			rCtx := r.Context()
+			data, err := sessionClient.GetSessionData(rCtx, &session.GetSessionDataRequest{
+				Token: bearer,
+			})
+			if err != nil {
+				w.WriteHeader(http.StatusUnauthorized)
+				body, err := json.Marshal(ErrorMessage{
+					Error: err.Error(),
+				})
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				w.Write(body)
+				return
+			}
+
+			userID := data.GetData().GetReferenceId()
 			// put it in context.
 			ctx := context.WithValue(rCtx, authTokenCtxKey, bearer)
-			ctx = context.WithValue(ctx, userIDCtxKey, bearer)
+			ctx = context.WithValue(ctx, userIDCtxKey, userID)
 			// overwrite request
 			r = r.WithContext(ctx)
 		}

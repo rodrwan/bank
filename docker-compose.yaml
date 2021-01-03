@@ -1,24 +1,6 @@
 version: "3"
 
 services:
-  rabbitmq:
-    container_name: rabbitmq
-    image: rabbitmq:3-management
-    ports:
-      - "8082:15672"
-
-  # broker:
-  #   container_name: broker
-  #   build: .
-  #   command:
-  #     - "go run"
-  #     - "cmd/broker/main.go"
-  #   environment:
-  #     - MQ_URI=amqp://rabbitmq
-  #     - MONGO_URI=mongodb://db:27017
-  #   depends_on:
-  #     - rabbitmq
-
   server:
     container_name: server
     build:
@@ -26,10 +8,11 @@ services:
       context: .
     restart: always
     environment:
-      - ACCOUNTS_URL=accounts:8001
-      - DEPOSITS_URL=deposits:8002
-      - SESSION_URL=account:8003
-      - WITHDRAWALS_URL=account:8004
+      - ACCOUNTS_READ_URL=accounts-read:8010
+      - ACCOUNTS_WRITE_URL=accounts-write:8011
+      - USERS_READ_URL=users-read:8020
+      - USERS_WRITE_URL=users-write:8021
+      - SESSION_URL=session:8090
       - PORT=8000
       - JAEGER_SERVICE_NAME=grapqhl-server
       - JAEGER_AGENT_HOST=jaeger
@@ -136,6 +119,27 @@ services:
       - rabbitmq
     ports:
       - "8021:8021"
+
+  session:
+    container_name: session
+    build:
+      dockerfile: ./cmd/session/Dockerfile
+      context: .
+    restart: always
+    environment:
+      - PORT=8090
+      - JAEGER_SERVICE_NAME=users-write-svc
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6832
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+      - REDIS_URL=redis:6379
+      - ACCESS_SECRET=flashdfaslkf813e
+      - REFRESH_SECRET=dasldfkah32
+    depends_on:
+      - redis
+    ports:
+      - "8090:8090"
+
   # deposits:
   #   container_name: deposits
   #   build: .
@@ -150,21 +154,6 @@ services:
   #     - rabbitmq
   #   ports:
   #     - "8002:8002"
-
-  # session:
-  #   container_name: session
-  #   build: .
-  #   command:
-  #     - "go run"
-  #     - "cmd/session/main.go"
-  #   environment:
-  #     - MONGO_URI=mongodb://db:27017
-  #     - PORT=8003
-  #   depends_on:
-  #     - db
-  #     - rabbitmq
-  #   ports:
-  #     - "8003:8003"
 
   # withdrawals:
   #   container_name: withdrawals
@@ -207,3 +196,15 @@ services:
       - "14268:14268"
       - "14250:14250"
       - "9411:9411"
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3-management
+    ports:
+      - "8082:15672"
+
+  redis:
+    image: redis:5.0.6-alpine
+    ports:
+      - "6379:6379"
+    environment:
+      - TEST=111

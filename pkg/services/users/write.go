@@ -17,7 +17,7 @@ type WriteServiceConfig struct {
 
 // NewWriteServer initialises an instance of the accounts write server.
 func NewWriteServer(asc WriteServiceConfig) pb.UsersWriteServiceServer {
-	fmt.Println("Accounts write service")
+	fmt.Println("Users write service")
 
 	return WriteService{
 		store: asc.Store,

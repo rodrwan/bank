@@ -14,6 +14,7 @@ type ReadServiceConfig struct {
 
 // NewReadService initialises an instance of the users service.
 func NewReadService(asc ReadServiceConfig) pb.UsersReadServiceServer {
+	fmt.Println("Users read service")
 	return ReadService{
 		store: asc.Store,
 	}
