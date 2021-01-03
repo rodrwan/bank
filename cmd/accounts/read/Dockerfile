@@ -1,4 +1,4 @@
-FROM golang
+FROM golang:alpine AS builder
 
 COPY . /app
 
@@ -8,4 +8,8 @@ RUN go get ./...
 
 RUN go build -o server ./cmd/accounts/read
 
-CMD [ "./server" ]
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
+WORKDIR /app
+COPY --from=builder /app/server .
+CMD ["./server"]

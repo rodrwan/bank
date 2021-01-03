@@ -2,7 +2,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"os"
@@ -23,7 +22,6 @@ const (
 )
 
 func main() {
-	fmt.Println("Accounts write service")
 	port := os.Getenv("PORT")
 	if port != "" {
 		port = defaultPort
