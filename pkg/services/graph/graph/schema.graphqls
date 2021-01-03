@@ -37,7 +37,11 @@ type Deposit {
 
 type User {
   id: ID!
-  name: String!
+  firstname: String!
+  lastname: String!
+  username: String!
+  email: String!
+  password: String!
 }
 
 type Withdrawal {
@@ -68,7 +72,11 @@ input NewSession {
 }
 
 input NewUser {
-  name: String!
+  firstname: String!
+  lastname: String!
+  username: String!
+  email: String!
+  password: String!
 }
 
 input NewAccount {
@@ -92,9 +100,8 @@ type CreateUserAccountResponse {
 }
 
 type Mutation {
+  createSession(input: NewSession!): Session! @trace
   createUserAccount(input: NewUser!): CreateUserAccountResponse! @trace
-
-  createSession(input: NewSession!): Session! @isAuthenticated
 
   createDeposit(input: NewDeposit!): Deposit! @isAuthenticated
 }

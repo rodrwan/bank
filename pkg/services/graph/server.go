@@ -9,6 +9,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/rodrwan/bank/pkg/auth"
 	accounts "github.com/rodrwan/bank/pkg/pb/accounts"
+	"github.com/rodrwan/bank/pkg/pb/session"
 	users "github.com/rodrwan/bank/pkg/pb/users"
 	"github.com/rodrwan/bank/pkg/services/graph/graph"
 	"github.com/rodrwan/bank/pkg/services/graph/graph/generated"
@@ -24,6 +25,8 @@ type ServerConfig struct {
 
 	UsersReadClient  users.UsersReadServiceClient
 	UsersWriteClient users.UsersWriteServiceClient
+
+	SessionClient session.SessionServiceClient
 }
 
 const defaultPort = "8080"
@@ -44,6 +47,7 @@ func NewServer(sc ServerConfig, tracer opentracing.Tracer) {
 				AccountsWriteClient: sc.AccountsWriteClient,
 				UsersWriteClient:    sc.UsersWriteClient,
 			},
+			SessionClient: sc.SessionClient,
 		},
 	}
 
@@ -53,7 +57,7 @@ func NewServer(sc ServerConfig, tracer opentracing.Tracer) {
 	srv := handler.NewDefaultServer(g)
 
 	withTracer := tracerPkg.Middleware(playground.Handler("GraphQL playground", "/query"), tracer)
-	withAuth := auth.Middleware(withTracer, "localhost", true)
+	withAuth := auth.Middleware(withTracer, sc.SessionClient, "localhost", true)
 
 	http.Handle("/", withAuth)
 	http.Handle("/query", srv)
